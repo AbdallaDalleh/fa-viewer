@@ -42,11 +42,11 @@ Y_colour = QtCore.Qt.red
 
 
 # Unicode characters
-char_times  = u'\u00D7'             # Multiplication sign
-char_mu     = u'\u03BC'             # Greek mu
-char_sqrt   = u'\u221A'             # Square root sign
-char_cdot   = u'\u22C5'             # Centre dot
-char_squared = u'\u00B2'            # Superscript 2
+char_times  = '\u00D7'             # Multiplication sign
+char_mu     = '\u03BC'             # Greek mu
+char_sqrt   = '\u221A'             # Square root sign
+char_cdot   = '\u22C5'             # Centre dot
+char_squared = '\u00B2'            # Superscript 2
 
 micrometre  = char_mu + 'm'
 
@@ -130,7 +130,7 @@ class decimation:
     def update(self):
         self.selector.blockSignals(True)
         self.selector.clear()
-        valid_items = filter(self.filter, self.item_list)
+        valid_items = list(filter(self.filter, self.item_list))
         if not valid_items:
             valid_items = self.item_list[:1]
         self.selector.addItems(['%d:1' % n for n in valid_items])
@@ -403,9 +403,9 @@ class mode_fft_logf(mode_common):
         self.sample_frequency = sample_frequency
         self.xmax = sample_frequency / 2
         self.counts = compute_gaps(sample_count // 2 - 1, FFT_LOGF_POINTS)
-        print("self.counts: ", self.counts[0:50], self.counts.shape)
+        print(("self.counts: ", self.counts[0:50], self.counts.shape))
         self.xaxis = sample_frequency * numpy.cumsum(self.counts) / sample_count
-        print("self.xaxis: ", self.xaxis[0:50], self.xaxis.shape)
+        print(("self.xaxis: ", self.xaxis[0:50], self.xaxis.shape))
         self.xmin = self.xaxis[0]
         self.reset = True
 
@@ -417,8 +417,8 @@ class mode_fft_logf(mode_common):
             condense(fft**2, self.counts) / self.counts[:,None])
         if self.scalef:
             fft_logf *= self.xaxis[:, None]
-            print(self.xaxis[:, None])
-            print(self.xaxis.shape)
+            print((self.xaxis[:, None]))
+            print((self.xaxis.shape))
 
         if self.filter == 1:
             return fft_logf
@@ -494,11 +494,11 @@ class mode_integrated(mode_common):
         self.sample_frequency = sample_frequency
         self.xmax = sample_frequency / 2
         self.counts = compute_gaps(sample_count // 2 - 1, FFT_LOGF_POINTS)[1:]
-        print("self.counts: ", self.counts[0:50], self.counts.shape)
-        print("self.counts: ", self.counts[-50:], self.counts.shape)
+        print(("self.counts: ", self.counts[0:50], self.counts.shape))
+        print(("self.counts: ", self.counts[-50:], self.counts.shape))
         self.xaxis = sample_frequency * (
             numpy.cumsum(self.counts) + 1) / sample_count
-        print("X axis: ", self.xaxis[0:20], self.xaxis.shape)
+        print(("X axis: ", self.xaxis[0:20], self.xaxis.shape))
         self.xmin = self.xaxis[0]
 
     def compute(self, value):
