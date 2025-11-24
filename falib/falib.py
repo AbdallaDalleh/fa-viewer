@@ -93,7 +93,7 @@ class connection:
         while True:
             chunk = self.sock.recv(65536)
             if chunk:
-                result.append(chunk)
+                result.append(chunk.decode())
             else:
                 break
         return ''.join(result)
@@ -154,7 +154,7 @@ class subscription(connection):
 
 def server_command(command, **kargs):
     server = connection(**kargs)
-    server.sock.send(command)
+    server.sock.send(command.encode())
     result = server.recv_all()
     server.close()
     return result
