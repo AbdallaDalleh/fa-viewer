@@ -82,7 +82,7 @@ def load_location_file(globs, location, full_path, server = None, port = None):
     result = dict(FA_PORT = falib.DEFAULT_PORT)
     config_file = find_location_file(location, full_path)
     context = dict(here = os.path.dirname(config_file), os = os)
-    execfile(config_file, context, result)
+    exec(open(config_file).read(), context, result)
     if server:
         result['FA_SERVER'] = server
     if port:
