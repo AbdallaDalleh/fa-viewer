@@ -32,8 +32,8 @@
 #      michael.abbott@diamond.ac.uk
 
 import numpy
-from PyQt4 import Qwt5, QtGui, QtCore
-
+from PyQt5 import QtGui, QtCore, QtWidgets
+import qwt as Qwt5
 
 # Actually, these really belong in fa-viewer.py, but the practicalities of doing
 # this are not worth the trouble.
@@ -56,8 +56,8 @@ class mode_common:
 
     def __init__(self, parent):
         self.parent = parent
-        self.__tray = QtGui.QWidget(parent.ui)
-        self.__tray_layout = QtGui.QHBoxLayout()
+        self.__tray = QtWidgets.QWidget(parent.ui)
+        self.__tray_layout = QtWidgets.QHBoxLayout()
         self.__tray.setLayout(self.__tray_layout)
         parent.ui.bottom_row.addWidget(self.__tray)
         self.__tray_layout.setContentsMargins(0, 0, 0, 0)
@@ -112,12 +112,12 @@ class decimation:
         self.filter = filter
         self.on_update = on_update
 
-        mode.addWidget(QtGui.QLabel('Decimation', parent.ui))
+        mode.addWidget(QtWidgets.QLabel('Decimation', parent.ui))
 
-        self.selector = QtGui.QComboBox(parent.ui)
+        self.selector = QtWidgets.QComboBox(parent.ui)
         # To get the initial size right, start by adding all items
         self.selector.addItems(['%d:1' % n for n in item_list])
-        self.selector.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.selector.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         self.selector.currentIndexChanged.connect(self.set_decimation)
         mode.addWidget(self.selector)
         self.decimation = self.item_list[0]
@@ -166,7 +166,7 @@ class mode_raw(mode_common):
     def __init__(self, parent):
         mode_common.__init__(self, parent)
 
-        self.qt_diff = QtGui.QCheckBox('Diff', parent.ui)
+        self.qt_diff = QtWidgets.QCheckBox('Diff', parent.ui)
         self.diff = False
         self.qt_diff.stateChanged.connect(self.set_diff)
         self.addWidget(self.qt_diff)
@@ -265,10 +265,15 @@ def scaled_abs_fft(value, sample_frequency, windowed=False, axis=0):
     # This trickery below is simply implementing fft[:N//2] where the slicing is
     # along the specified axis rather than axis 0.  It does seem a bit
     # complicated...
+    # N = value.shape[axis]
+    # slice = [numpy.s_[:] for s in fft.shape]
+    # slice[axis] = numpy.s_[:N//2]
+    # fft = fft[tuple(slice)]
+
     N = value.shape[axis]
-    slice = [numpy.s_[:] for s in fft.shape]
-    slice[axis] = numpy.s_[:N//2]
-    fft = fft[slice]
+    slices = [slice(None)] * fft.ndim
+    slices[axis] = slice(0, N // 2)
+    fft = fft[tuple(slices)]
 
     # Finally scale the result into units per sqrt(Hz)
     x = numpy.abs(fft) * numpy.sqrt(2.0 / (sample_frequency * N))
@@ -288,7 +293,7 @@ class mode_fft(mode_common):
     xshortname = 'f'
     xunits = 'Hz'
     xscale = Qwt5.QwtLinearScaleEngine
-    yscale = Qwt5.QwtLog10ScaleEngine
+    yscale = Qwt5.QwtLogScaleEngine
     xticks = 5
     xmin = 0
     ymin_normal = 1e-4
@@ -299,11 +304,11 @@ class mode_fft(mode_common):
     def __init__(self, parent):
         mode_common.__init__(self, parent)
 
-        self.windowed = QtGui.QCheckBox('Windowed', parent.ui)
+        self.windowed = QtWidgets.QCheckBox('Windowed', parent.ui)
         self.windowed.setChecked(True)
         self.addWidget(self.windowed)
 
-        squared = QtGui.QCheckBox(
+        squared = QtWidgets.QCheckBox(
             '%s%s/Hz' % (micrometre, char_squared), parent.ui)
         squared.stateChanged.connect(self.set_squared)
         self.addWidget(squared)
@@ -393,8 +398,8 @@ class mode_fft_logf(mode_common):
     xname = 'Frequency'
     xshortname = 'f'
     xunits = 'Hz'
-    xscale = Qwt5.QwtLog10ScaleEngine
-    yscale = Qwt5.QwtLog10ScaleEngine
+    xscale = Qwt5.QwtLogScaleEngine
+    yscale = Qwt5.QwtLogScaleEngine
     xticks = 10
 
     Filters = [1, 10, 100]
@@ -403,9 +408,7 @@ class mode_fft_logf(mode_common):
         self.sample_frequency = sample_frequency
         self.xmax = sample_frequency / 2
         self.counts = compute_gaps(sample_count // 2 - 1, FFT_LOGF_POINTS)
-        print(("self.counts: ", self.counts[0:50], self.counts.shape))
         self.xaxis = sample_frequency * numpy.cumsum(self.counts) / sample_count
-        print(("self.xaxis: ", self.xaxis[0:50], self.xaxis.shape))
         self.xmin = self.xaxis[0]
         self.reset = True
 
@@ -417,8 +420,8 @@ class mode_fft_logf(mode_common):
             condense(fft**2, self.counts) / self.counts[:,None])
         if self.scalef:
             fft_logf *= self.xaxis[:, None]
-            print((self.xaxis[:, None]))
-            print((self.xaxis.shape))
+            # print((self.xaxis[:, None]))
+            # print((self.xaxis.shape))
 
         if self.filter == 1:
             return fft_logf
@@ -434,17 +437,17 @@ class mode_fft_logf(mode_common):
     def __init__(self, parent):
         mode_common.__init__(self, parent)
 
-        self.windowed = QtGui.QCheckBox('Windowed', parent.ui)
+        self.windowed = QtWidgets.QCheckBox('Windowed', parent.ui)
         self.windowed.setChecked(True)
         self.addWidget(self.windowed)
 
-        check_scalef = QtGui.QCheckBox('scale by f', parent.ui)
+        check_scalef = QtWidgets.QCheckBox('scale by f', parent.ui)
         self.addWidget(check_scalef)
         check_scalef.stateChanged.connect(self.set_scalef_state)
 
-        self.addWidget(QtGui.QLabel('Filter', parent.ui))
+        self.addWidget(QtWidgets.QLabel('Filter', parent.ui))
 
-        selector = QtGui.QComboBox(parent.ui)
+        selector = QtWidgets.QComboBox(parent.ui)
         selector.addItems(['%ds' % f for f in self.Filters])
         self.addWidget(selector)
         selector.currentIndexChanged.connect(self.set_filter)
@@ -484,8 +487,8 @@ class mode_integrated(mode_common):
     xshortname = 'f'
     xunits = 'Hz'
     yunits = micrometre
-    xscale = Qwt5.QwtLog10ScaleEngine
-    yscale = Qwt5.QwtLog10ScaleEngine
+    xscale = Qwt5.QwtLogScaleEngine
+    yscale = Qwt5.QwtLogScaleEngine
     xticks = 10
     ymin = 1e-3
     ymax = 10
@@ -494,11 +497,8 @@ class mode_integrated(mode_common):
         self.sample_frequency = sample_frequency
         self.xmax = sample_frequency / 2
         self.counts = compute_gaps(sample_count // 2 - 1, FFT_LOGF_POINTS)[1:]
-        print(("self.counts: ", self.counts[0:50], self.counts.shape))
-        print(("self.counts: ", self.counts[-50:], self.counts.shape))
         self.xaxis = sample_frequency * (
             numpy.cumsum(self.counts) + 1) / sample_count
-        print(("X axis: ", self.xaxis[0:20], self.xaxis.shape))
         self.xmin = self.xaxis[0]
 
     def compute(self, value):
@@ -514,16 +514,16 @@ class mode_integrated(mode_common):
     def __init__(self, parent):
         mode_common.__init__(self, parent)
 
-        reversed = QtGui.QCheckBox('Reversed', parent.ui)
+        reversed = QtWidgets.QCheckBox('Reversed', parent.ui)
         self.addWidget(reversed)
         reversed.stateChanged.connect(self.set_reversed)
         self.reversed = False
 
-        yselect = QtGui.QCheckBox('Linear', parent.ui)
+        yselect = QtWidgets.QCheckBox('Linear', parent.ui)
         self.addWidget(yselect)
         yselect.stateChanged.connect(self.set_yscale)
 
-        button = QtGui.QPushButton('Background', parent.ui)
+        button = QtWidgets.QPushButton('Background', parent.ui)
         self.addWidget(button)
         button.clicked.connect(self.set_background)
 
@@ -545,7 +545,7 @@ class mode_integrated(mode_common):
         if linear:
             self.yscale = Qwt5.QwtLinearScaleEngine
         else:
-            self.yscale = Qwt5.QwtLog10ScaleEngine
+            self.yscale = Qwt5.QwtLogScaleEngine
         self.parent.reset_mode()
 
     def set_reversed(self, reversed):
