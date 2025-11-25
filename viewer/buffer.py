@@ -33,7 +33,8 @@
 
 import cothread
 import numpy
-
+import sys
+# import os
 
 class buffer:
     '''Circular buffer.'''
@@ -105,8 +106,8 @@ class monitor:
     def resize(self, notify_size, update_size):
         '''The notify_size is the data size delivered in each update, while
         the update_size determines how frequently an update is delivered.'''
-        self.notify_size = notify_size
-        self.update_size = update_size
+        self.notify_size = int(notify_size)
+        self.update_size = int(update_size)
         self.data_ready = 0
 
     def __monitor(self):
